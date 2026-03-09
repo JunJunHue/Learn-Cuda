@@ -1,26 +1,138 @@
 @import "tailwindcss";
 
+/* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:           #080d14;
+  --bg-surface:   #0d1117;
+  --bg-raised:    #161b22;
+  --bg-hover:     #1c2128;
+  --border:       #21262d;
+  --border-muted: #161b22;
+
+  --accent:       #00ff84;
+  --accent-dim:   #00cc69;
+  --accent-glow:  rgba(0, 255, 132, 0.15);
+  --accent-bg:    rgba(0, 255, 132, 0.06);
+
+  --text-primary: #e6edf3;
+  --text-muted:   #7d8590;
+  --text-subtle:  #3d444d;
+
+  --red:          #ff4d4f;
+  --yellow:       #e3b341;
+  --blue:         #58a6ff;
+  --purple:       #bc8cff;
+
+  --font-sans: var(--font-sans, "IBM Plex Sans", system-ui, sans-serif);
+  --font-mono: var(--font-mono, "JetBrains Mono", monospace);
+
+  --radius-sm:  4px;
+  --radius-md:  6px;
+  --radius-lg:  10px;
+
+  --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ─── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html { color-scheme: dark; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Grid background ────────────────────────────────────────── */
+.bg-grid {
+  background-image:
+    linear-gradient(var(--border-muted) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-muted) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Radial fade so grid fades out toward edges */
+.bg-grid-fade {
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+}
+
+/* ─── Glow effects ───────────────────────────────────────────── */
+.glow-accent {
+  text-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(0, 255, 132, 0.08);
+}
+
+.glow-box {
+  box-shadow: 0 0 0 1px var(--border), 0 0 20px var(--accent-glow);
+}
+
+/* ─── Typography ─────────────────────────────────────────────── */
+.font-mono { font-family: var(--font-mono); }
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-subtle); }
+
+/* ─── Category badge colors ──────────────────────────────────── */
+.badge-memory        { background: rgba(88,166,255,0.1); color: #79c0ff; border-color: rgba(88,166,255,0.2); }
+.badge-parallelism   { background: rgba(188,140,255,0.1); color: #d2a8ff; border-color: rgba(188,140,255,0.2); }
+.badge-optimization  { background: rgba(227,179,65,0.1);  color: #f0c350; border-color: rgba(227,179,65,0.2); }
+.badge-algorithms    { background: rgba(0,255,132,0.08);  color: #56d364; border-color: rgba(0,255,132,0.15); }
+.badge-multi-gpu     { background: rgba(255,77,79,0.1);   color: #ff7b72; border-color: rgba(255,77,79,0.2); }
+.badge-interop       { background: rgba(255,166,0,0.1);   color: #ffa657; border-color: rgba(255,166,0,0.2); }
+
+/* ─── Difficulty colors ──────────────────────────────────────── */
+.diff-beginner     { color: #56d364; }
+.diff-intermediate { color: #e3b341; }
+.diff-advanced     { color: #ff7b72; }
+.dot-beginner      { background: #56d364; }
+.dot-intermediate  { background: #e3b341; }
+.dot-advanced      { background: #ff7b72; }
+
+/* ─── Code editor scanlines ──────────────────────────────────── */
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.06) 3px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ─── Animations ─────────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+.animate-pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.animate-blink { animation: blink 1.2s step-end infinite; }
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up        { animation: fade-up 0.5s ease forwards; }
+.animate-fade-up-d1     { animation: fade-up 0.5s 0.1s ease both; }
+.animate-fade-up-d2     { animation: fade-up 0.5s 0.2s ease both; }
+.animate-fade-up-d3     { animation: fade-up 0.5s 0.3s ease both; }
+.animate-fade-up-d4     { animation: fade-up 0.5s 0.4s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
