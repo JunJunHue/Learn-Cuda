@@ -8,9 +8,11 @@ import { CONCEPTS, searchConcepts } from "@/data/concepts";
 const CATEGORIES = Array.from(new Set(CONCEPTS.map((c) => c.category))).sort();
 
 const CATEGORY_CLS: Record<string, string> = {
-  Parallelism: "badge-parallelism",
-  Memory: "badge-memory",
+  Parallelism:  "badge-parallelism",
+  Memory:       "badge-memory",
   Optimization: "badge-optimization",
+  Algorithms:   "badge-algorithms",
+  Tooling:      "badge-tooling",
 };
 
 export default function ConceptsPage() {

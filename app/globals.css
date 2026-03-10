@@ -85,6 +85,7 @@ body {
 .badge-algorithms    { background: rgba(0,255,132,0.08);  color: #56d364; border-color: rgba(0,255,132,0.15); }
 .badge-multi-gpu     { background: rgba(255,77,79,0.1);   color: #ff7b72; border-color: rgba(255,77,79,0.2); }
 .badge-interop       { background: rgba(255,166,0,0.1);   color: #ffa657; border-color: rgba(255,166,0,0.2); }
+.badge-tooling       { background: rgba(255,77,79,0.08);  color: #f08080; border-color: rgba(255,77,79,0.18); }
 
 /* ─── Difficulty colors ──────────────────────────────────────── */
 .diff-beginner     { color: #56d364; }
