@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function Nav({ active }: { active?: "projects" | "concepts" | "sandbox" }) {
+export default function Nav({ active }: { active?: "projects" | "concepts" | "sandbox" | "gpu" }) {
   const linkCls = (page: typeof active) =>
     `text-sm transition-colors duration-150 ${
       active === page
@@ -36,6 +36,9 @@ export default function Nav({ active }: { active?: "projects" | "concepts" | "sa
           </Link>
           <Link href="/sandbox" className={`${linkCls("sandbox")} px-3 py-1.5 rounded hover:bg-[var(--bg-hover)]`}>
             Sandbox
+          </Link>
+          <Link href="/gpu" className={`${linkCls("gpu")} px-3 py-1.5 rounded hover:bg-[var(--bg-hover)]`}>
+            GPU
           </Link>
 
           <div className="w-px h-4 bg-[var(--border)] mx-2" />
