@@ -1,6 +1,56 @@
+import type { TestCase } from "@/data/projects";
+
 export interface SandboxRequest {
   code: string;
   userId?: string;
+}
+
+// ── Test case evaluation ───────────────────────────────────────────────────
+
+export interface TestCaseResult {
+  id: string;
+  description: string;
+  passed: boolean;
+  hidden: boolean;
+}
+
+export interface TestRunResult {
+  passed: number;
+  total: number;
+  results: TestCaseResult[];
+}
+
+/**
+ * Evaluate a list of TestCases against the program's stdout.
+ * All conditions on a case must hold for it to pass.
+ */
+export function evaluateTestCases(stdout: string, testCases: TestCase[]): TestRunResult {
+  const out = stdout ?? "";
+  const results: TestCaseResult[] = testCases.map((tc) => {
+    let passed = true;
+
+    if (passed && tc.outputContains) {
+      for (const s of tc.outputContains) {
+        if (!out.includes(s)) { passed = false; break; }
+      }
+    }
+    if (passed && tc.outputNotContains) {
+      for (const s of tc.outputNotContains) {
+        if (out.includes(s)) { passed = false; break; }
+      }
+    }
+    if (passed && tc.outputMatchesPattern) {
+      try {
+        if (!new RegExp(tc.outputMatchesPattern).test(out)) passed = false;
+      } catch {
+        passed = false;
+      }
+    }
+
+    return { id: tc.id, description: tc.description, passed, hidden: !!tc.hidden };
+  });
+
+  return { passed: results.filter((r) => r.passed).length, total: results.length, results };
 }
 
 export interface SandboxResult {

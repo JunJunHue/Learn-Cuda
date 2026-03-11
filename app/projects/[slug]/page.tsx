@@ -150,7 +150,11 @@ export default async function ProjectPage({
               {project.steps ? (
                 <TutorialSandbox steps={project.steps} />
               ) : (
-                <SandboxPanel starterCode={project.starterCode} />
+                <SandboxPanel
+                  starterCode={project.starterCode}
+                  runTests={project.runTests}
+                  submitTests={project.submitTests}
+                />
               )}
             </div>
 

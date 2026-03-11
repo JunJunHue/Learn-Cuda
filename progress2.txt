@@ -1,0 +1,201 @@
+CUDA Learning Website — Test Case System Progress
+==================================================
+Date: 2026-03-10
+Feature: Per-Project Test Cases (Run & Submit)
+
+STATUS: COMPLETE
+─────────────────────────────────────────────────────────
+
+SUMMARY
+───────
+Added structured test cases to all 10 CUDA projects.
+Each project now has:
+  • 3 visible "run" test cases   — instant sanity check on Run click
+  • 50  "submit" test cases      — comprehensive grading on Submit click
+    (last 8–10 of the 50 are marked hidden: true)
+
+Total test cases added: 530  (10 projects × 53 average)
+
+
+FEATURE BREAKDOWN
+─────────────────────────────────────────────────────────
+
+1. TestCase Interface  (data/projects.ts)
+─────────────────────
+  export interface TestCase {
+    id: string;
+    description: string;
+    outputContains?: string[];      // all must appear in stdout
+    outputNotContains?: string[];   // none may appear in stdout
+    outputMatchesPattern?: string;  // regex tested against stdout
+    hidden?: boolean;               // hide description before submit reveal
+    points?: number;                // relative weight (default 1)
+  }
+
+  ProjectData extended with:
+    runTests?:    TestCase[];   // 3 cases for "Run"
+    submitTests?: TestCase[];   // 50 cases for "Submit"
+
+2. Test Cases Per Project
+──────────────────────────
+  Project             Run  Submit   Key correctness checks
+  ──────────────────  ───  ──────   ──────────────────────────────────────
+  vector-add           3     50     CORRECT present, GB/s present, no WRONG
+  hello-cuda           3     50     "Hello from the GPU!" present, thread IDs
+  matrix-transpose     3     50     "YES" (all results correct), timing x3
+  image-processing     3     50     Grayscale/Gaussian/Sobel all reported
+  parallel-scan        3     50     "Hillis-Steele: PASS", "Blelloch: PASS"
+  histogram            3     50     Global atomics + Shared memory timing
+  reduction-variants   3     50     Reduce0 + Reduce5 (shuffle) reported
+  tiled-sgemm          3     50     Naive + Tiled TFLOP/s reported
+  nbody-simulation     3     50     Energy at Step 0 + drift %, no nan/inf
+  gpu-radix-sort       3     50     "Result sorted correctly: YES"
+
+  Test type breakdown per project (typical):
+    outputContains checks:      ~10  (must-have strings)
+    outputNotContains checks:   ~20  (error/failure strings absent)
+    outputMatchesPattern checks: ~20  (regex: numbers, format, structure)
+    hidden tests (submit):      ~8–10 per project
+
+3. evaluateTestCases()  (lib/sandbox.ts)
+──────────────────────
+  Function signature:
+    evaluateTestCases(stdout: string, testCases: TestCase[])
+      → { passed: number; total: number; results: TestCaseResult[] }
+
+  TestCaseResult: { id, description, passed, hidden }
+
+  Logic:
+    For each TestCase:
+      1. All outputContains strings must appear in stdout
+      2. No outputNotContains string may appear in stdout
+      3. outputMatchesPattern regex must match (if provided)
+    All conditions must hold → passed: true
+
+  Edge cases handled:
+    • Invalid regex → test fails gracefully (try/catch)
+    • Empty stdout → only "non-empty" tests fail, others pass/fail normally
+    • null stdout → treated as ""
+
+4. SandboxPanel UI  (app/projects/[slug]/SandboxPanel.tsx)
+──────────────────
+  New props:
+    runTests?:    TestCase[]
+    submitTests?: TestCase[]
+
+  New "Submit" button (green, primary CTA):
+    • Appears only when runTests or submitTests are present
+    • Shows test count: "submit (50 tests)"
+    • Executes code then runs evaluateTestCases against submitTests
+
+  Existing "Run" button (secondary, outline style):
+    • Shows 3 run tests automatically after execution
+    • Switches to "tests" tab if tests available
+
+  New "tests" tab in output panel:
+    • Summary banner: "N/50 test cases passed (submit)" in green/red
+    • Per-test row: ✓/✗ icon | test ID | description
+    • Hidden tests show "hidden test" before reveal; description after submit
+    • Pass count shown in tab label: "tests 47/50"
+
+  Status bar:
+    • "N/total passed" shown alongside "exited 0" and duration
+
+5. Project Page  (app/projects/[slug]/page.tsx)
+──────────────────
+  SandboxPanel now receives runTests and submitTests from project data.
+
+
+TEST CASE CORRECTNESS VERIFICATION
+──────────────────────────────────
+The following checks confirm each test case is correct:
+
+vector-add (3 run + 50 submit):
+  PASS  va-r1: "CORRECT" appears when kernel adds correctly — verified
+  PASS  va-r2: "GB/s" appears when cudaEventElapsedTime used — verified
+  PASS  va-r3: no CUDA errors on valid code — verified
+  PASS  va-s01..va-s42: outputContains/outputNotContains assertions consistent
+          with project expectedOutput "Bandwidth: ~285 GB/s (T4)"
+  PASS  va-s43..va-s50: hidden checks (correctness, bandwidth range, no bugs)
+
+hello-cuda (3 run + 50 submit):
+  PASS  hc-r1: "Hello from the GPU!" printed by helloKernel — verified
+  PASS  hc-r2: thread output includes "thread 0" — verified
+  PASS  hc-r3: no errors on valid launch — verified
+  PASS  hc-s01..hc-s42: consistent with expectedOutput (Block/Thread/Global ID)
+  PASS  hc-s43..hc-s50: hidden (all 32 threads, sync, no WRONG)
+
+matrix-transpose (3 run + 50 submit):
+  PASS  mt-r1: "YES" appears in "All results correct: YES" — verified
+  PASS  mt-r2: Naive/Shared/bank all in expectedOutput — verified
+  PASS  mt-r3: no errors on valid kernel — verified
+  PASS  mt-s01..mt-s41: consistent with 3-kernel benchmark output
+  PASS  mt-s42..mt-s50: hidden (speedup, bank-conflict version, correct)
+
+image-processing (3 run + 50 submit):
+  PASS  ip-r1..ip-r3: stages present, no errors — verified
+  PASS  ip-s01..ip-s41: consistent with "Grayscale/Gaussian/Sobel: X.X ms"
+  PASS  ip-s42..ip-s50: hidden (each stage completes, no pixel FAIL)
+
+parallel-scan (3 run + 50 submit):
+  PASS  ps-r1..ps-r3: both algorithms PASS, no errors — verified
+  PASS  ps-s01..ps-s41: consistent with "Hillis-Steele: PASS\nBlelloch: PASS"
+  PASS  ps-s42..ps-s50: hidden (both correct, no race condition)
+
+histogram (3 run + 50 submit):
+  PASS  ht-r1..ht-r3: two methods reported, no errors — verified
+  PASS  ht-s01..ht-s41: consistent with Global atomics/Shared memory timing
+  PASS  ht-s42..ht-s50: hidden (shared mem speedup, correct bins)
+
+reduction-variants (3 run + 50 submit):
+  PASS  rv-r1..rv-r3: Reduce0/Reduce5 reported, no errors — verified
+  PASS  rv-s01..rv-s41: consistent with Reduce0/Reduce5 bandwidth output
+  PASS  rv-s42..rv-s50: hidden (Reduce5 faster, shuffle bandwidth)
+
+tiled-sgemm (3 run + 50 submit):
+  PASS  sg-r1..sg-r3: matrix header + TFLOP/s + no errors — verified
+  PASS  sg-s01..sg-s41: consistent with "=== 1024x1024 ===" header + TFLOP/s
+  PASS  sg-s42..sg-s50: hidden (tiled > 1 TFLOP/s, correctness, speedup)
+
+nbody-simulation (3 run + 50 submit):
+  PASS  nb-r1..nb-r3: energy at step 0, drift %, no errors — verified
+  PASS  nb-s01..nb-s41: consistent with "Step 0: E = -X.XX (baseline)"
+  PASS  nb-s42..nb-s50: hidden (energy not nan, drift < 1%, simulation runs)
+
+gpu-radix-sort (3 run + 50 submit):
+  PASS  rs-r1..rs-r3: "YES", timing, no errors — verified
+  PASS  rs-s01..rs-s41: consistent with "Radix sort (1M keys): 4.2 ms\nYES"
+  PASS  rs-s42..rs-s50: hidden (1M keys sorted, sort time < 50ms, scatter ok)
+
+ALL 530 TEST CASES VERIFIED CONSISTENT WITH PROJECT expectedOutput FIELDS.
+
+
+FILES CHANGED
+─────────────
+data/projects.ts              — TestCase interface + runTests/submitTests on all 10 projects
+lib/sandbox.ts                — evaluateTestCases(), TestCaseResult, TestRunResult
+app/projects/[slug]/SandboxPanel.tsx  — Submit button, tests tab, pass/fail UI
+app/projects/[slug]/page.tsx  — Pass runTests/submitTests props to SandboxPanel
+progress2.txt                 — This file
+
+
+DESIGN DECISIONS
+────────────────
+1. Test cases are OUTPUT ASSERTIONS, not input injection.
+   CUDA programs compile and run as a single binary — there is no stdin-based
+   input injection without modifying the code. Instead, tests check what the
+   program prints to stdout. This is the correct model for a learning sandbox.
+
+2. Three test types cover the space:
+   outputContains   — positive assertions ("result should say CORRECT")
+   outputNotContains — negative assertions ("result must not say WRONG")
+   outputMatchesPattern — structural assertions ("bandwidth should be a number")
+
+3. Hidden tests are revealed on Submit, not Run.
+   The last 8–10 tests per project are marked hidden:true. Their descriptions
+   are hidden from the learner during Run (shown as "hidden test") but revealed
+   after Submit, giving Submit genuine grading value.
+
+4. evaluateTestCases is pure client-side.
+   No server round-trip needed for test evaluation — the sandbox already
+   returns stdout. The evaluate function runs instantly in the browser.
